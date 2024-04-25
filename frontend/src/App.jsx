@@ -1,25 +1,21 @@
-import React from 'react'
-import { Route, Routes } from 'react-router-dom'
-import Home from './pages/Home'
-
-import Showbook from './pages/Showbook'
-import Deletebook from './pages/Deletebook'
-import Addbook from './pages/Addbook'
-import Editbook from './Editbook'
-
+import React from "react";
+import { Route, Routes } from "react-router-dom";
+import Home from "./pages/Home";
+import AppBook from "./pages/AppBook";
+import EditBook from "./pages/EditBook";
+import DeleteBook from "./pages/DeleteBook";
+import ShowBook from "./pages/ShowBook";
 
 const App = () => {
   return (
-    <>
-   <Routes>
-    <Route path="/" element={<Home/>}/>
-    <Route path="/book/edit/:id" element={<Editbook/>}/>
-    <Route path="/book/:id" element={<Showbook/>}/>
-    <Route path="/book/delete/:id" element={<Deletebook/>}/>
-    <Route path="/book/create" element={<Addbook/>}/>
-   </Routes>
-    </>
-  )
-}
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/book/create" element={<AppBook />} />
+      <Route path="/book/edit/:id" element={<EditBook />} />
+      <Route path="/book/delete/:id" element={<DeleteBook />} />
+      <Route path="/book/:id" element={<ShowBook />} />
+    </Routes>
+  );
+};
 
-export default App
+export default App;

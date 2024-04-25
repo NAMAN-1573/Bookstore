@@ -1,124 +1,110 @@
-import express from 'express'
-import 'dotenv/config'
-import dbConnect from './dbConnect.js';
-import { Book } from './models/booModel.js';
-import {StatusCodes} from 'http-status-codes'
-import cors from "cors"
-// import {StatusCodes} from 'htt/'
+import express from "express";
+import "dotenv/config";
+import dbconnect from "./dbConnect.js";
+import { Book } from "./model/bookModel.js";
+import cors from "cors";
 
-const app=express();
-  app.use(express.json());  
-  app.use(cors());  
+const app = express();
 const PORT = process.env.PORT;
 
+//middleware
+app.use(express.json());
+app.use(cors());
 
-const start =  async ()=>{
+const start = async () => {
   try {
-   await dbConnect(process.env.MONGO_URL);
-    console.log("Database connected");
-    app.listen(PORT, ()=> {
-      console.log("Server is started....");
+    await dbconnect(process.env.MONGO_URL);
+    console.log("Database Connected");
+    app.listen(PORT, () => {
+      console.log(`App is started at: ${PORT}`);
     });
-  } catch (error)
-   {
-    console.log(error)
+  } catch (error) {
+    console.log(error);
   }
 };
 
 start();
 
+app.use(express.static("public"));
 
 
-// app.get("/book",(req,res)=>{
-//   res.send("how may i help you");
+app.get("/page", (req, res) => {
+  res.send("<h1>Welcome to Second Screen</h1>");
+});
+// app.post("/page", (req, res) => {
+//   res.send("Add a Book");
 // });
 
-
- app.post("/book",async (req, res)=>{
- 
- try {
-   const{title,author,year} = req.body;
-   if(!title || !author || !year)
-   { return res.json({msg : 'please provide title authour and year'});
-  }
-  await Book.create(req.body);
-  res.json({msg : 'book added successfully'});
- } catch (error) {
-     console.log("error");
-     res
-      .status(StatusCodes.BAD_GATEWAY)
-      .json({msg: "INTERNAL SERVER ERROR , TRY AGAIN"});
- }
-
-  
-});
-
-//  app.get("/book/:id" ,  async(req , res)=>{
-// try {
-//   const books = await Book.find();
-//   if(!books){
-//     return res.status(StatusCodes.Ok).json({msg: " books not avialable"});
-//     res.status(StatusCodes.OK).json({count:books.length , data :books })
-//   }
-// } catch (error) {
-//   console.log(error);
-//   res.status(StatusCodes.BAD_REQUEST).json({msg: "internal server error"});
-// }
-// })
-
-app.get("/book/:id",async (req,res)=>{
+app.post("/pagedata", async (req, res) => {
   try {
-      const books=await Book.find();
-      if(!books) return res.status(StatusCodes.OK).json({msg:"Book not available"});
-      res.status(StatusCodes.OK).json({count:books.length,data:books});
-      
-  } catch (error) {
-      res.status(StatusCodes.BAD_REQUEST).json({msg:"Internal sever Error"});
-      
-  }
-}
-);
+    const { title, author, year } = req.body;
 
-
-app.get("/book/:id" , async(req,res)=> {
-  const {id} =req.params;
-  try {
-    const book = Book.findByid
-    (id);
-    if(!book){
-      return res
-      .status(StatusCodes.NOT_FOUND)
-      .json({msg : `book not found with id -${id}`})
-      res.status(StatusCodes.OK).json({data: book})
+    if (!title || !author || !year) {
+      return res.json({
+        success: false,
+        message: "Please provide all the details",
+      });
     }
+    await Book.create(req.body);
+    res.json({
+      success: true,
+      message: "Entry creared successfully",
+    });
   } catch (error) {
-    console.log(error)
-    res.status(StatusCodes.BAD_REQUEST).json({msg : " internal server error"});
+    console.log(error);
+    return res.json({
+      success: false,
+      message: "Undefined error",
+    });
   }
-
-})
-
-
-
-
-app.delete("/book/:id", async (req, res) => {
-  
-      const {id} = req.params;
-      // console.log(id);
-      try {
-        const book = await Book.findByIdAndDelete(id);
-        if(!book){
-          return res.status(StatusCodes.NOT_FOUND).json({msg : `Book not found with ${id}`})
-        }
-        res.status(StatusCodes.OK).json({data: book});
-      }
-       catch (error) {
-        console.log(error);
-        res.status(StatusCodes.BAD_REQUEST).json("Internal Server Error")
-      }
 });
 
-app.put("/book/:id", async (req, res) => {
+app.get("/showallbooks", async (req, res) => {
+  try {
+    const book = await Book.find();
+    if (!book) {
+      res.status(400).json({
+        message: "Book not found",
+      });
+    }
+    res.status(200).json({
+      count: book.length,
+      data: book,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.json({
+      success: false,
+      message: "Cannot fetch Book",
+    });
+  }
+});
+
+app.get("/bookfinder/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const book = await Book.findById(id);
+    if (!book) {
+      return res.status(500).json({
+        success: false,
+        message: `Book with this ${id} is not found`,
+      });
+    }
+    res.status(200).json({
+      success: true,
+      message: `Book mil gayi hai with ${id}`,
+      data: book,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.json({
+      success: false,
+      message: "Cannot fetch Book",
+    });
+  }
+});
+
+app.put("/updatebook/:id", async (req, res) => {
   const { id } = req.params;
   const { title, author, year } = req.body;
   try {
@@ -146,10 +132,27 @@ app.put("/book/:id", async (req, res) => {
     });
   }
 });
-    
-  
 
-app.get("*",(req,res)=>{
-  res.send("welcome to the book store");
+app.get("/page/:id", (req, res) => {
+  res.send("Get a Book");
+});
+// app.put("/page/:id", (req, res) => {
+//   res.send("Put a Book");
+// });
+
+app.delete("/delete/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const book = await Book.findByIdAndDelete(id);
+    if (!book)
+      return res.status(500).json({ msg: `Book not found with id - ${id}` });
+    res.status(200).json({ msg: "Book Deleted", data: book });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ msg: "internal server error" });
+  }
 });
 
+app.get("*", (req, res) => {
+  res.send("<h1>Welcome to Home Screen</h1>");
+});
